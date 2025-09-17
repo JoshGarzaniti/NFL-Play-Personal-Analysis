@@ -56,10 +56,202 @@ pbp = pbp%>%
   select(-lateral_interception_player_id, -lateral_interception_player_name, -interception_player_id, -punt_returner_player_id, -punt_returner_player_name, -lateral_punt_returner_player_id, -lateral_punt_returner_player_name, -lateral_kickoff_returner_player_id, -lateral_kickoff_returner_player_name, -kickoff_returner_player_id, -kicker_player_name, -punter_player_id, -punter_player_name, -kicker_player_id, -kicker_player_name, -blocked_player_id, -blocked_player_name, -tackle_for_loss_1_player_id, -tackle_for_loss_2_player_id, -qb_hit_1_player_id, -qb_hit_2_player_id, -forced_fumble_player_1_player_id, -forced_fumble_player_1_team, -forced_fumble_player_1_player_name, -forced_fumble_player_2_team)%>%
   select(-forced_fumble_player_2_player_id, -forced_fumble_player_2_player_name, -solo_tackle_1_team, -solo_tackle_2_team, -solo_tackle_1_player_id, -solo_tackle_2_player_id, -assist_tackle_1_team, -assist_tackle_2_team, -assist_tackle_3_team, -assist_tackle_4_team, -assist_tackle_1_player_id, -assist_tackle_2_player_id, -assist_tackle_3_player_id, -assist_tackle_4_player_id, -tackle_with_assist, -tackle_with_assist_1_player_id, -tackle_with_assist_2_player_id, -tackle_with_assist_1_team, -tackle_with_assist_2_team, -tackle_with_assist_1_player_name, -tackle_with_assist_2_player_name, -pass_defense_1_player_id, -pass_defense_2_player_id, -fumbled_1_team, -fumbled_1_player_id, -fumbled_1_player_name, -fumbled_2_team, -fumbled_2_player_id, -fumbled_2_player_name, -fumble_recovery_1_player_id)%>%
   select(-fumble_recovery_1_player_name, -fumble_recovery_1_team, -fumble_recovery_1_yards, -fumble_recovery_2_player_id, -fumble_recovery_2_team, -fumble_recovery_2_player_name, -fumble_recovery_2_yards, -sack_player_id, -half_sack_1_player_id, -half_sack_2_player_id, -return_team, -return_yards, -penalty_player_id, -penalty_player_name, -penalty_yards, -penalty_type, -replay_or_challenge, -replay_or_challenge_result, -defensive_two_point_attempt, -defensive_two_point_conv, -defensive_extra_point_attempt, -defensive_extra_point_conv, -safety_player_id, -safety_player_name, -season, -cp, -series, -series_success, -series_result, -order_sequence, -start_time, -time_of_day, -stadium, -weather, -nfl_api_id, -play_clock, -play_deleted, -special_teams_play, -st_play_type, -end_clock_time, -end_yard_line, -fixed_drive, -fixed_drive_result, -drive_real_start_time, -drive_play_count, -drive_time_of_possession, -drive_first_downs, -drive_inside20)%>%
-  select(-drive_ended_with_score, -drive_quarter_start, -drive_quarter_end, -drive_yards_penalized, -drive_start_transition, -drive_end_transition, -drive_game_clock_start, -drive_game_clock_end, -drive_start_yard_line, -drive_end_yard_line, -drive_play_id_started, -drive_play_id_ended, -away_score, -home_score, -location, -result, -total, -spread_line, -div_game, -roof, -surface, -temp, -wind, -home_coach, -away_coach, -stadium_id, -game_stadium, -aborted_play, -passer, -passer_jersey_number, -rusher, -rusher_jersey_number, -receiver, -receiver_jersey_number, -special, -play, -passer_id, -rusher_id, -receiver_id, -name, -jersey_number, -id, -fantasy_player_name, -fantasy_player_id, -fantasy, -fantasy_id, -out_of_bounds, -home_opening_kickoff)
+  select(-drive_ended_with_score, -drive_quarter_start, -drive_quarter_end, -drive_yards_penalized, -drive_start_transition, -drive_end_transition, -drive_game_clock_start, -drive_game_clock_end, -drive_start_yard_line, -drive_end_yard_line, -drive_play_id_started, -drive_play_id_ended, -away_score, -home_score, -location, -result, -total, -spread_line, -div_game, -roof, -surface, -temp, -wind, -home_coach, -away_coach, -stadium_id, -game_stadium, -aborted_play, -passer, -passer_jersey_number, -rusher, -rusher_jersey_number, -receiver, -receiver_jersey_number, -special, -play, -passer_id, -rusher_id, -receiver_id, -name, -jersey_number, -id, -fantasy_player_name, -fantasy_player_id, -fantasy, -fantasy_id, -out_of_bounds, -home_opening_kickoff, -extra_point_result)
+```
+
+```{r}
+passing = pbp%>%
+  filter(play_type == "pass")
+
+rushing = pbp%>%
+  filter(play_type == "run")
+```
+
+Through 2 weeks, teams collectively are passing 58.45% of the time and running
+~41.55% of the time.
+#Play Rates
+```{r}
+offense_teams_summary = pbp%>%
+  group_by(posteam)%>%
+  summarize(total_plays = n())%>%
+  arrange(desc(total_plays))
+
+defense_teams_summary = pbp%>%
+  group_by(defteam)%>%
+  summarize(total_plays = n())%>%
+  arrange(desc(total_plays))
+```
+
+Through week 2, Cleveland, Buffalo, Carolina, Indianapolis, and San Francisco reflected the top 5 teams with the most offensive plays, while Baltimore, Arizona, Cincinnati, New York (Giants), and Seattle had the most on defense.
+##Success Rate
+```{r}
+team_success_offense = pbp%>%
+  group_by(posteam)%>%
+  summarize(total_success = sum(success),
+         success_per = mean(success))%>%
+    rename(team_abbr = posteam)%>%
+  arrange(desc(success_per))
+
+team_success_defense = pbp%>%
+  group_by(defteam)%>%
+  summarize(
+    total_stops = sum(success == 0, na.rm = TRUE),
+    stop_rate   = mean(success == 0, na.rm = TRUE))%>%
+    rename(team_abbr = defteam)%>%
+  arrange(desc(stop_rate))
+```
+
+Top 5 teams by offensive success rate:
+Colts
+Jags
+Chargers
+Bills
+49ers
+
+Top 5 teams by defensive success rate:
+Broncos
+Rams
+Chargers
+Packers
+Lions
+
+Plotting
+```{r}
+offense_defense_teams = team_success_offense%>%
+  inner_join(team_success_defense, by = "team_abbr")
+
+team_success_plot = ggplot(offense_defense_teams, aes(x = success_per, y = stop_rate)) +
+  geom_nfl_logos(aes(team_abbr = team_abbr), width = 0.07) +
+  labs(
+    title = "NFL Team Success: Offense vs Defense Success Rates",
+    subtitle = "2025 Season",
+    x = "Offensive Success Rate",
+    y = "Defensive Stop Rate")+
+  dark_theme_minimal()+
+  theme(panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())
+
+team_success_plot
+```
+
+```{r}
+ggsave(
+  filename = "G:/My Drive/Personal Projects/team_success_plot.png",
+  plot = team_success_plot,
+  width = 10, 
+  height = 7,
+  dpi = 320)
 ```
 
 
+##Success Rate by play style:
+```{r}
+passing_success = pbp%>%
+  filter(play_type == "pass")%>%
+  group_by(posteam)%>%
+  summarize(total_success = sum(success),
+            pass_success_per = mean(success))%>%
+    rename(team_abbr = posteam)%>%
+  arrange(desc(pass_success_per))
 
+rushing_success = pbp%>%
+  filter(play_type == "run")%>%
+  group_by(posteam)%>%
+  summarize(total_success = sum(success),
+            rush_success_per = mean(success))%>%
+    rename(team_abbr = posteam)%>%
+  arrange(desc(rush_success_per))
+```
+
+Who's better at passing (in terms of a per play success rate):
+Colts
+Chargers
+Lions
+49ers
+Cardinals
+
+Who's better at rushing (in terms of a per play success rate):
+Buccaneers
+Bills
+Jags
+Eagles
+Cowboys
+
+Plotting
+```{r}
+passing_rushing_teams = passing_success%>%
+  inner_join(rushing_success, by = "team_abbr")
+
+passing_rushing_plot = ggplot(passing_rushing_teams, aes(x = pass_success_per, y = rush_success_per)) +
+  geom_nfl_logos(aes(team_abbr = team_abbr), width = 0.07) +
+  labs(
+    title = "Team Offensive Success",
+    subtitle = "2025 Season",
+    x = "Passing Success Rate",
+    y = "Rushing Success Rate")+
+  dark_theme_minimal()+
+  theme(panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())
+
+passing_rushing_plot
+```
+
+```{r}
+ggsave(
+  filename = "G:/My Drive/Personal Projects/passing_rushing_plot.png",
+  plot = passing_rushing_plot,
+  width = 10, 
+  height = 7,
+  dpi = 320)
+```
+
+
+##EPA
+```{r}
+Offensive_EPA = pbp%>%
+  group_by(posteam)%>%
+  summarize(Total_EPA_Generated_OFF= sum(epa),
+            EPA_per_play_OFF= Total_EPA_Generated_OFF / n())%>%
+  rename(team_abbr = posteam)%>%
+  arrange(desc(EPA_per_play_OFF))
+
+Defensive_EPA = pbp%>%
+  group_by(defteam)%>%
+  summarize(Total_EPA_Generated_DEF = sum(epa),
+            EPA_per_play_DEF = Total_EPA_Generated_DEF / n())%>%
+  rename(team_abbr = defteam)%>%
+    arrange(EPA_per_play_DEF)
+```
+
+
+Plotting
+```{r}
+EPA_offense_defense = Offensive_EPA%>%
+  inner_join(Defensive_EPA, by = "team_abbr")
+
+EPA_offense_defense_plot = ggplot(EPA_offense_defense, 
+                                  aes(x = EPA_per_play_OFF, y = EPA_per_play_DEF))+
+  geom_nfl_logos(aes(team_abbr = team_abbr), width = 0.07)+
+  labs(
+    title = "Offensive and Defensive EPA by Team",
+    subtitle = "2025 Season",
+    x = "Offensive EPA (higher is better)",
+    y = "Defensive EPA (more negative is better)")+
+  dark_theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())+
+  scale_y_reverse()
+
+EPA_offense_defense_plot
+```
+
+```{r}
+ggsave(
+  filename = "G:/My Drive/Personal Projects/EPA_offense_defense_plot.png",
+  plot = EPA_offense_defense_plot,
+  width = 10, 
+  height = 7,
+  dpi = 320)
+```
 
 
