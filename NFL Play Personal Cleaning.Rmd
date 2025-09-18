@@ -235,8 +235,8 @@ EPA_offense_defense_plot = ggplot(EPA_offense_defense,
   labs(
     title = "Offensive and Defensive EPA by Team",
     subtitle = "2025 Season",
-    x = "Offensive EPA (higher is better)",
-    y = "Defensive EPA (more negative is better)")+
+    x = "Offensive EPA per play (higher is better)",
+    y = "Defensive EPA per play (more negative is better)")+
   dark_theme_minimal() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())+
@@ -253,5 +253,55 @@ ggsave(
   height = 7,
   dpi = 320)
 ```
+
+
+##QB EPA Through Week 2
+```{r}
+QB_EPA = pbp%>%
+  filter(pass == 1)%>%
+  group_by(posteam, passer_player_name)%>%
+  summarize(Total_QB_EPA= sum(qb_epa),
+            QB_EPA_per_play= Total_QB_EPA / n(), 
+            snaps = n())%>%
+  rename(team_abbr = posteam)%>%
+  filter(!is.na(passer_player_name))%>%
+  arrange(desc(QB_EPA_per_play))
+```
+
+Plotting
+
+```{r}
+QB_EPA_snaps = ggplot(QB_EPA, 
+                                  aes(x = passer_player_name, y = QB_EPA_per_play))+
+  geom_nfl_logos(aes(team_abbr = team_abbr), width = 0.07)+
+  geom_text_repel(aes(label = passer_player_name), 
+                  box.padding = 0.5,
+                  point.padding = 0.5,
+                  nudge_y = 0.04,
+                  size = 3, 
+                  color = "white")+
+  labs(
+    title = "QB EPA and Passing Snap Count",
+    subtitle = "2025 Season",
+    x = "Player",
+    y = "QB EPA per play (higher is better)")+
+  dark_theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+QB_EPA_snaps
+```
+
+```{r}
+ggsave(
+  filename = "G:/My Drive/Personal Projects/QB_EPA_snaps.png",
+  plot = QB_EPA_snaps,
+  width = 10, 
+  height = 7,
+  dpi = 320)
+```
+
 
 
