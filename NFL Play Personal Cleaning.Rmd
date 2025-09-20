@@ -303,5 +303,38 @@ ggsave(
   dpi = 320)
 ```
 
+##QBS
+##Passing
+Who is airing the ball out the most?
+```{r}
+airing = pbp%>%
+  filter(play_type == "pass")%>%
+  group_by(passer_player_name)%>%
+  summarize(
+    plays = n(),
+    completions = sum(complete_pass, na.rm = TRUE),
+    completion_percentage = mean(complete_pass, na.rm = TRUE),
+    yards = sum(passing_yards, na.rm = TRUE),
+    touchdowns = sum(pass_touchdown, na.rm = TRUE),
+    interceptions = sum(interception, na.rm = TRUE),
+    average_yards_gained = mean(yards_gained, na.rm = TRUE),
+    average_yards_to_go = mean(ydstogo, na.rm = TRUE),
+    ADOT = mean(air_yards, na.rm = TRUE),
+    third_downs_converted = sum(third_down_converted, na.rm = TRUE),
+    third_down_conversion_rate = mean(third_down_converted, na.rm = TRUE),
+    epa_generated = sum(qb_epa, na.rm = TRUE),
+    epa_generated_per_pass = mean(qb_epa, na.rm = TRUE),
+    air_epa_generated = sum(air_epa, na.rm = TRUE),
+    air_epa_generated_per_pass = mean(air_epa, na.rm = TRUE),
+    comp_air_epa_generated = sum(comp_air_epa, na.rm = TRUE),
+    comp_air_epa_generated_per_pass = mean(comp_air_epa, na.rm = TRUE),
+    average_expected_pass_probability = mean(xpass, na.rm = TRUE),
+    average_pass_rate_over_expected = mean(pass_oe, na.rm = TRUE))%>%
+  ungroup()
+
+```
+
+
+
 
 
