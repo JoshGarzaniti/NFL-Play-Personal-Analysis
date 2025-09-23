@@ -309,7 +309,7 @@ Who is airing the ball out the most?
 ```{r}
 airing = pbp%>%
   filter(play_type == "pass")%>%
-  group_by(passer_player_name)%>%
+  group_by(posteam, passer_player_name)%>%
   summarize(
     plays = n(),
     completions = sum(complete_pass, na.rm = TRUE),
@@ -330,9 +330,84 @@ airing = pbp%>%
     comp_air_epa_generated_per_pass = mean(comp_air_epa, na.rm = TRUE),
     average_expected_pass_probability = mean(xpass, na.rm = TRUE),
     average_pass_rate_over_expected = mean(pass_oe, na.rm = TRUE))%>%
-  ungroup()
+  ungroup()%>%
+  filter(plays >= 20)%>% #Filter control for QB's
+  rename(team_abbr = posteam)
 
 ```
+
+Looking at QBs who are passing higher than expected in 2025
+```{r}
+passing_over_expected_plot = ggplot(airing, 
+                                  aes(x = passer_player_name, y = average_pass_rate_over_expected))+
+  geom_nfl_logos(aes(team_abbr = team_abbr), width = 0.07)+
+  geom_text_repel(aes(label = passer_player_name), 
+                  box.padding = 0.5,
+                  point.padding = 0.5,
+                  nudge_y = 0.04,
+                  size = 3, 
+                  color = "white")+
+  labs(
+    title = "QB's by Average Pass Rate over Expected",
+    subtitle = "2025 Season",
+    x = "Player",
+    y = "Pass Rate (over Expected)")+
+  dark_theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+passing_over_expected_plot
+
+```
+
+```{r}
+ggsave(
+  filename = "G:/My Drive/Personal Projects/passing_over_expected_plot.png",
+  plot = passing_over_expected_plot,
+  width = 10, 
+  height = 7,
+  dpi = 320)
+```
+
+Are you Passing ahead of the sticks?
+```{r}
+passing_ahead_of_sticks_plot = ggplot(airing, 
+                                  aes(x = ADOT, y = average_yards_to_go))+
+  geom_nfl_logos(aes(team_abbr = team_abbr), width = 0.05)+
+  geom_jitter(width = 0.20, height = 0.20)+
+  geom_text_repel(aes(label = passer_player_name), 
+                  box.padding = 0.5,
+                  point.padding = 0.5,
+                  nudge_y = 0.05,
+                  size = 3, 
+                  color = "white",
+                  force = 5,
+                  max.overlaps = 20)+
+  labs(
+    title = "Average Depth of Target and Average Yards to Go",
+    subtitle = "QB's in the 2025 Season",
+    x = "ADOT",
+    y = "Yrds to Go")+
+  dark_theme_minimal()+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+passing_ahead_of_sticks_plot
+```
+
+```{r}
+ggsave(
+  filename = "G:/My Drive/Personal Projects/passing_ahead_of_sticks_plot.png",
+  plot = passing_ahead_of_sticks_plot,
+  width = 10, 
+  height = 7,
+  dpi = 320)
+```
+
+
+
 
 
 
