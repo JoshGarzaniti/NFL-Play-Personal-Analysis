@@ -309,6 +309,10 @@ Who is airing the ball out the most?
 ```{r}
 airing = pbp%>%
   filter(play_type == "pass")%>%
+  mutate(checkdown = ifelse(!is.na(air_yards) & air_yards < 5, 1, 0),
+  checkdown = as.numeric(checkdown),
+  deep_throw = ifelse(!is.na(air_yards) & air_yards > 25, 1, 0),
+  deep_throw = as.numeric(deep_throw))%>%
   group_by(posteam, passer_player_name)%>%
   summarize(
     plays = n(),
@@ -329,7 +333,11 @@ airing = pbp%>%
     comp_air_epa_generated = sum(comp_air_epa, na.rm = TRUE),
     comp_air_epa_generated_per_pass = mean(comp_air_epa, na.rm = TRUE),
     average_expected_pass_probability = mean(xpass, na.rm = TRUE),
-    average_pass_rate_over_expected = mean(pass_oe, na.rm = TRUE))%>%
+    average_pass_rate_over_expected = mean(pass_oe, na.rm = TRUE),
+    checkdowns = sum(checkdown),
+    deep_throws = sum(deep_throw),
+    checkdown_rate = (checkdowns / n()),
+    deep_throw_rate = (deep_throws / n()))%>%
   ungroup()%>%
   filter(plays >= 20)%>% #Filter control for QB's
   rename(team_abbr = posteam)
@@ -407,8 +415,46 @@ ggsave(
 ```
 
 
+Checkdown Rate and Deep Throw Rate
+```{r}
+checkdown_deep_throw_plot = ggplot(airing, 
+  aes(x = checkdown_rate, y = deep_throw_rate))+
+  geom_nfl_logos(aes(team_abbr = team_abbr), width = 0.055)+
+  geom_text_repel(
+    aes(label = passer_player_name),
+    size = 2.8, 
+    color = "white",
+    box.padding = 0.2, 
+    point.padding = 0.2, 
+    force = 1.5,  
+    max.overlaps = Inf,
+    segment.color = "gray60",
+    segment.size = 0.2)+
+  labs(
+    title = "Checkdown and Deep Throw Rates",
+    subtitle = "QBs in the 2025 Season (min. 20 dropbacks)",
+    x = "Checkdown Rate (Under 5 yards)",
+    y = "Deep Throw Rate (25 yards or more)")+
+  dark_theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    axis.title = element_text(size = 12))
 
+checkdown_deep_throw_plot
 
+```
+
+```{r}
+ggsave(
+  filename = "G:/My Drive/Personal Projects/checkdown_deep_throw_plot.png",
+  plot = checkdown_deep_throw_plot,
+  width = 10, 
+  height = 7,
+  dpi = 320)
+```
 
 
 
