@@ -26,6 +26,8 @@ library(nflfastR)
 library(mice)
 library(lme4)
 library(here)
+library(DT)
+library(htmlwidgets)
 ```
 
 ##Load in Data via NFLFastR
@@ -455,6 +457,52 @@ ggsave(
   height = 7,
   dpi = 320)
 ```
+
+
+QB Ranking:
+```{r}
+reverse_vars = c("interceptions", "checkdowns", "checkdown_rate", "average_yards_to_go")
+
+ranked_airing = airing%>%
+  mutate(across(
+    .cols = -c(team_abbr, passer_player_name), 
+    .fns = list(rank = ~ if(cur_column() %in% reverse_vars) {
+      rank(., ties.method = "min") 
+    } else {
+      rank(-., ties.method = "min") 
+    }),
+    .names = "{.col}_rank"))%>%
+  rowwise()%>%
+  mutate(overall_score = mean(c_across(ends_with("_rank")), na.rm = TRUE))%>%
+  ungroup()%>%
+  mutate(overall_rank = rank(overall_score, ties.method = "min"))%>%
+  select(team_abbr, passer_player_name, overall_rank, ends_with("_rank"))
+
+
+n_qbs = nrow(ranked_airing)
+breaks = seq(1, n_qbs, length.out = 4)
+colors = c("#08306B", "#2171B5", "#6BAED6", "#FC9272", "#CB181D")
+
+qb_ranking = datatable(
+  ranked_airing,
+  options = list(pageLength = 36, scrollX = TRUE),
+  rownames = FALSE)%>%
+  formatStyle(
+    columns = names(ranked_airing)[-(1:3)], 
+    backgroundColor = styleInterval(breaks, colors),
+    color = "white")
+
+qb_ranking
+
+
+```
+
+```{r}
+
+saveWidget(qb_ranking, "C:/Personal Projects/QB_leaderboard.html")
+```
+
+
 
 
 
